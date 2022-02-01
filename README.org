@@ -1,4 +1,3 @@
-#+TITLE: Yet Another Word Counter
 #+AUTHOR: Bruno Cardoso <cardoso.bc@gmail.com>
 #+DATE: 2022-02-01
 #+STARTUP: indent content
