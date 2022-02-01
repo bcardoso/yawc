@@ -1,0 +1,44 @@
+#+TITLE: Yet Another Word Counter
+#+AUTHOR: Bruno Cardoso <cardoso.bc@gmail.com>
+#+DATE: 2022-02-01
+#+STARTUP: indent content
+
+* Yet Another Word Counter
+
+A simple word counter minor-mode for achieving writing goals in Emacs.
+
+** Installation
+
+Clone this repo and add the yawc directory to your =load-path=:
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/path/to/yawc")
+(require 'yawc)
+#+end_src
+
+Or, with use-package + straight.el:
+
+#+begin_src emacs-lisp
+(use-package yawc
+  :straight (yawc :host github :repo "bcardoso/yawc"))
+#+end_src
+
+
+** Usage
+
+Run =M-x yawc-mode=. It will prompt the user for a writing goal for the current buffer.
+
+When idle, =yawc= will show the current word count status in the minibuffer.
+
+When you're done, run =M-x yawc-mode= again to disabled it.
+
+
+** Customization
+
+Run =M-x customize-group RET yawc= or edit the following variables to your liking:
+
+- =yawc-writing-goal-default=: The default writing goal, set to 500 words.
+
+- =yawc-idle-interval=: The idle interval, in seconds, to count the words. Default is 10 seconds.
+
+- =yawc-lighter=: The lighter to be displayed in the mode line when the mode is on ("yawc").
