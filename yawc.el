@@ -42,7 +42,7 @@
   :group 'yawc
   :type 'integer)
 
-(defcustom yawc-lighter "yawc "
+(defcustom yawc-lighter " yawc "
   "Lighter to be displayed in the mode line when the mode is on."
   :group 'yawc
   :type 'string)
