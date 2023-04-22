@@ -42,7 +42,7 @@
   :group 'yawc
   :type 'integer)
 
-(defcustom yawc-lighter " yawc "
+(defcustom yawc-lighter " yawc"
   "Lighter to be displayed in the mode line when the mode is on."
   :group 'yawc
   :type 'string)
@@ -79,6 +79,7 @@
         (message (format "Keep going... %s words remaining."
                          (- word-goal-total current-word-count)))))))
 
+;;;###autoload
 (define-minor-mode yawc-mode
   "Enable yawc-mode in current buffer."
   :init-value nil
