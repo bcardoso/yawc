@@ -1,10 +1,10 @@
 ;;; yawc.el --- Yet Another Word Counter -*- lexical-binding: t -*-
 
-;; Copyright (C) 2022 Bruno Cardoso
+;; Copyright (C) 2022-2025 Bruno Cardoso
 
 ;; Author: Bruno Cardoso <cardoso.bc@gmail.com>
 ;; URL: https://github.com/bcardoso/yawc
-;; Version: 0.1
+;; Version: 0.2
 ;; Package-Requires: ((emacs "27.2"))
 
 ;; This file is NOT part of GNU Emacs.
@@ -34,50 +34,70 @@
 
 (defcustom yawc-writing-goal-default 500
   "Default writing goal."
-  :group 'yawc
-  :type 'integer)
+  :type 'natnum)
 
 (defcustom yawc-idle-interval 10
-  "Idle interval, in seconds, to count the words."
-  :group 'yawc
-  :type 'integer)
+  "Idle interval, in seconds, to show current word count in echo area."
+  :type 'natnum)
 
-(defcustom yawc-lighter " yawc"
+(defcustom yawc-lighter " YAWC"
   "Lighter to be displayed in the mode line when the mode is on."
-  :group 'yawc
   :type 'string)
 
-(defvar yawc-current-buffer nil
-  "Count words from this buffer.")
-
-(defvar yawc-initial-word-count nil
+(defvar-local yawc-initial-word-count 0
   "Initial word count.")
 
-(defvar yawc-writing-goal nil
+(defvar-local yawc-writing-goal nil
   "Writing goal.")
 
+(defun yawc--read-word-goal ()
+  "Read word count goal."
+  (let ((goal (read-number "Word goal: " yawc-writing-goal-default)))
+    (if (<= goal 0)
+        yawc-writing-goal-default
+      goal)))
+
+(defun yawc--total ()
+  "Number of words in current buffer."
+  (count-words (point-min) (point-max)))
+
+(defun yawc--current ()
+  "Number of words written in current buffer."
+  (- (yawc--total) yawc-initial-word-count))
+
+(defun yawc--target ()
+  "Number of words to reach from inicial word count."
+  (+ yawc-initial-word-count yawc-writing-goal))
+
+(defun yawc--remaining ()
+  "Number of remaining words to reach goal."
+  (- (+ yawc-initial-word-count yawc-writing-goal) (yawc--total)))
+
 (defun yawc--init ()
-  "Initialize yawc-mode variables for the current buffer."
-  (setq-local yawc-current-buffer (current-buffer)
-              yawc-initial-word-count (count-words (point-min) (point-max))
-              yawc-writing-goal (string-to-number
-                             (read-from-minibuffer
-                              (format "Word goal [Default: %s]: "
-                                      yawc-writing-goal-default))))
-  (if (or (eq yawc-writing-goal nil) (<= yawc-writing-goal 0))
-      (setq-local yawc-writing-goal yawc-writing-goal-default))
+  "Initialize yawc-mode for the current buffer."
+  (setq-local yawc-initial-word-count (yawc--total)
+              yawc-writing-goal (yawc--read-word-goal))
   (message (format "Your writing goal is %s words." yawc-writing-goal)))
 
 (defun yawc--status ()
   "Current word count status."
-  (when (equal (current-buffer) yawc-current-buffer)
-    (let ((current-word-count (count-words (point-min) (point-max)))
-          (word-goal-total (+ yawc-initial-word-count yawc-writing-goal)))
-      (if (>= current-word-count word-goal-total)
-          (message (format "Alright! You wrote %s words."
-                           (- current-word-count yawc-initial-word-count)))
-        (message (format "Keep going... %s words remaining."
-                         (- word-goal-total current-word-count)))))))
+  (when yawc-mode
+    (message
+     (if (>= (yawc--total) (yawc--target))
+         (format "Alright! You wrote %d words. Your goal was %d."
+                 (yawc--current) yawc-writing-goal)
+       (format "Keep going... %s words remaining." (yawc--remaining))))))
+
+(defun yawc--report ()
+  "Report current status."
+  (message
+   (format "You wrote %s words, your goal was %s. Buffer now has %s words."
+           (yawc--current) yawc-writing-goal (yawc--total))))
+
+(defun yawc-reset ()
+  "Redefine word count goals for the current buffer."
+  (interactive)
+  (yawc--init))
 
 ;;;###autoload
 (define-minor-mode yawc-mode
@@ -86,17 +106,13 @@
   :lighter yawc-lighter
   (if yawc-mode
       (progn
-        (if (not yawc-current-buffer)
-            (yawc--init))
+        (yawc--init)
         (run-with-idle-timer yawc-idle-interval t #'yawc--status))
     (cancel-function-timers #'yawc--status)
-    (setq-local yawc-current-buffer nil)
-    (let ((current-word-count (count-words (point-min) (point-max))))
-      (message
-       (format "You wrote %s words, your goal was %s. Buffer now has %s words."
-               (- current-word-count yawc-initial-word-count)
-               yawc-writing-goal
-               current-word-count)))))
+    (yawc--report)))
+
+
+;;; Provide
 
 (provide 'yawc)
 
