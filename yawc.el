@@ -192,28 +192,35 @@
   (interactive)
   (yawc-init))
 
+(defun yawc-mode--enable ()
+  "Init `yawc-mode' in current buffer and enable timers."
+  (yawc-init)
+  (when yawc-show-status-when-idle
+    (setq-local yawc-status-timer
+                (run-with-idle-timer yawc-status-idle-interval t
+                                     #'yawc--status)))
+  (when yawc-show-mode-line-indicator
+    (setq-local yawc-indicator-timer
+                (run-with-idle-timer 0.5 t #'yawc--indicator-update))
+    (add-hook 'mode-line-misc-info yawc-indicator nil :local))
+  (add-hook 'kill-buffer-hook #'yawc-mode--disable nil :local))
+
+(defun yawc-mode--disable ()
+  "Disable `yawc-mode' in current buffer."
+  (and yawc-indicator-timer (cancel-timer yawc-indicator-timer))
+  (and yawc-status-timer (cancel-timer yawc-status-timer))
+  (remove-hook 'mode-line-misc-info yawc-indicator :local)
+  (force-mode-line-update t)
+  (yawc-report))
+
 ;;;###autoload
 (define-minor-mode yawc-mode
   "Enable `yawc-mode' in current buffer."
   :init-value nil
   :lighter yawc-lighter
   (if yawc-mode
-      (progn
-        (yawc-init)
-        (when yawc-show-status-when-idle
-          (setq-local yawc-status-timer
-                      (run-with-idle-timer yawc-status-idle-interval t
-                                           #'yawc--status)))
-        (when yawc-show-mode-line-indicator
-          (setq-local yawc-indicator-timer
-                      (run-with-idle-timer 0.5 t #'yawc--indicator-update))
-          (add-to-list 'mode-line-misc-info yawc-indicator)))
-    (cancel-timer yawc-indicator-timer)
-    (cancel-timer yawc-status-timer)
-    (setq-local mode-line-misc-info
-                (delete yawc-indicator mode-line-misc-info))
-    (force-mode-line-update t)
-    (yawc-report)))
+      (yawc-mode--enable)
+    (yawc-mode--disable)))
 
 
 ;;; Provide
